@@ -1,9 +1,13 @@
-name: Build Windows EXE
+name: Build Windows Installer
 
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
+    tags: [ "v*" ]
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -17,11 +21,30 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Publish self-contained EXE
+      - name: Publish self-contained Windows app
         run: dotnet publish GlassBubbleOverlay.csproj -c Release -r win-x64 --self-contained true
 
-      - name: Upload executable
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+
+      - name: Build installer EXE
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (!(Test-Path $iscc)) { throw "Inno Setup compiler not found: $iscc" }
+          & $iscc installer.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: GlassBubbleOverlay-Windows
-          path: bin/Release/net8.0-windows/win-x64/publish/
+          name: GlassBubbleOverlay-Installer
+          path: installer-output/GlassBubbleOverlay-Setup-*.exe
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: installer-output/GlassBubbleOverlay-Setup-*.exe
+          generate_release_notes: true
