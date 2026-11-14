@@ -1,59 +1,86 @@
 <Window x:Class="GlassBubbleOverlay.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:fx="clr-namespace:XamlTemplates.FX.Wpf;assembly=XamlTemplates.FX.Wpf"
         Title="Glass Bubble Overlay"
         Width="250" Height="250"
         WindowStyle="None"
         ResizeMode="NoResize"
-        AllowsTransparency="False"
-        Background="#01FFFFFF"
+        AllowsTransparency="True"
+        Background="Transparent"
         Topmost="True"
         ShowInTaskbar="True"
         ShowActivated="True"
+        fx:Glass.IsEnabled="True"
+        fx:Glass.FallbackBrush="#DCEAF5FA"
         Loaded="Window_Loaded"
-        SourceInitialized="Window_SourceInitialized"
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
         MouseRightButtonUp="Window_MouseRightButtonUp"
         KeyDown="Window_KeyDown">
-    <Grid>
-        <Path x:Name="GlassShape" Stretch="Fill"
+    <fx:Glass.Effect>
+        <fx:GlslShaderEffect Source="Shaders/LiquidLens.glsl"
+                             ReloadOnChange="True">
+            <fx:GlslParameter Name="ior" UniformType="Float" Value="2.15" />
+            <fx:GlslParameter Name="glassThickness" UniformType="Float" Value="0.90" />
+            <fx:GlslParameter Name="dispersion" UniformType="Float" Value="1.35" />
+            <fx:GlslParameter Name="blurRadius" UniformType="Float" Value="0.65" />
+            <fx:GlslParameter Name="refractionStrength" UniformType="Float" Value="1.0" />
+            <fx:GlslParameter Name="edgeLight" UniformType="Float" Value="0.82" />
+            <fx:GlslParameter Name="glassTint" UniformType="Float4">
+                <fx:GlslParameter.Value>
+                    <Color>#D9F1FAFF</Color>
+                </fx:GlslParameter.Value>
+            </fx:GlslParameter>
+        </fx:GlslShaderEffect>
+    </fx:Glass.Effect>
+
+    <Grid Background="Transparent">
+        <!-- Subtle glass body tint; the captured desktop remains visible below. -->
+        <Path Stretch="Fill"
               Data="M 40,8 C 18,8 8,18 8,40 L 8,170 C 8,192 18,202 40,202 L 166,202 C 184,202 196,193 200,177 C 202,168 201,158 207,151 C 214,143 226,140 239,135 C 221,132 207,127 201,115 L 201,40 C 201,18 191,8 169,8 Z"
-              Fill="#32DDF2FF" Stroke="#A8EAFBFF" StrokeThickness="1.4">
+              Fill="#0FFFFFFF"
+              Stroke="#66FFFFFF"
+              StrokeThickness="1.1">
             <Path.Effect>
-                <DropShadowEffect Color="#18314F" BlurRadius="22" ShadowDepth="5" Opacity="0.42"/>
+                <DropShadowEffect Color="#18314F" BlurRadius="19" ShadowDepth="4" Opacity="0.30"/>
             </Path.Effect>
         </Path>
+
+        <!-- Main white Fresnel rim. -->
         <Path Margin="9" Stretch="Fill"
               Data="M 40,8 C 18,8 8,18 8,40 L 8,170 C 8,192 18,202 40,202 L 166,202 C 184,202 196,193 200,177 C 202,168 201,158 207,151 C 214,143 226,140 239,135"
-              Stroke="#D9FFFFFF" StrokeThickness="2.2"
+              Stroke="#E8FFFFFF" StrokeThickness="2.0"
               StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-              Opacity="0.95" IsHitTestVisible="False"/>
-        <Path Margin="11" Stretch="Fill"
+              Opacity="0.92" IsHitTestVisible="False"/>
+
+        <!-- Chromatic dispersion: restrained cyan and violet spectral fringes. -->
+        <Path Margin="6.5" Stretch="Fill"
               Data="M 40,8 C 18,8 8,18 8,40 L 8,170"
-              Stroke="#FFFFFFFF" StrokeThickness="3.2"
-              StrokeStartLineCap="Round" Opacity="0.72"
+              Stroke="#9C70DFFF" StrokeThickness="1.35"
+              StrokeStartLineCap="Round" Opacity="0.78"
+              IsHitTestVisible="False"/>
+        <Path Margin="11.5" Stretch="Fill"
+              Data="M 169,8 C 191,8 201,18 201,40 L 201,115"
+              Stroke="#A5F0FFFF" StrokeThickness="1.55"
+              StrokeStartLineCap="Round" Opacity="0.82"
               IsHitTestVisible="False"/>
         <Path Margin="10" Stretch="Fill"
-              Data="M 169,8 C 191,8 201,18 201,40 L 201,115"
-              Stroke="#7BD7FFFF" StrokeThickness="1.5"
-              StrokeStartLineCap="Round" Opacity="0.62"
-              IsHitTestVisible="False"/>
-        <Path Margin="7" Stretch="Fill"
               Data="M 40,8 C 18,8 8,18 8,40 L 8,170"
-              Stroke="#75BFFFFF" StrokeThickness="1"
-              StrokeStartLineCap="Round" Opacity="0.85"
+              Stroke="#D8FFFFFF" StrokeThickness="2.4"
+              StrokeStartLineCap="Round" Opacity="0.34"
               IsHitTestVisible="False"/>
-        <Path Margin="12" Stretch="Fill"
-              Data="M 169,8 C 191,8 201,18 201,40 L 201,115"
-              Stroke="#A58DFFFF" StrokeThickness="1"
-              StrokeStartLineCap="Round" Opacity="0.55"
-              IsHitTestVisible="False"/>
-        <Border Margin="26,25,26,45" Background="#12FFFFFF" CornerRadius="24"
-                BorderBrush="#35FFFFFF" BorderThickness="1"
+
+        <!-- Inner reflected light. -->
+        <Border Margin="25,24,26,45"
+                Background="#0CFFFFFF"
+                BorderBrush="#24FFFFFF"
+                BorderThickness="1"
+                CornerRadius="25"
                 IsHitTestVisible="False"/>
+
         <TextBlock x:Name="InfoText"
                    Text="GLASS OVERLAY&#10;Informations dynamiques"
-                   Foreground="#F7FFFFFF"
+                   Foreground="#F8FFFFFF"
                    FontFamily="Segoe UI Variable Display"
                    FontSize="15" FontWeight="SemiBold"
                    TextAlignment="Center"
@@ -61,7 +88,7 @@
                    HorizontalAlignment="Center"
                    Margin="30,20,30,48">
             <TextBlock.Effect>
-                <DropShadowEffect Color="#40506A" BlurRadius="8" ShadowDepth="1" Opacity="0.6"/>
+                <DropShadowEffect Color="#40506A" BlurRadius="8" ShadowDepth="1" Opacity="0.58"/>
             </TextBlock.Effect>
         </TextBlock>
     </Grid>
